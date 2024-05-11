@@ -1,0 +1,32 @@
+name: Auto Fund
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Run daily at midnight
+
+jobs:
+  fund:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Install PayPal CLI
+        run: |
+          curl -sL https://github.com/paypal/checkout-cli/releases/latest/download/install.sh | sudo bash
+
+      - name: Authenticate with PayPal
+        env:
+          PAYPAL_CLIENT_ID: ${{ secrets.PAYPAL_CLIENT_ID }}
+          PAYPAL_CLIENT_SECRET: ${{ secrets.PAYPAL_CLIENT_SECRET }}
+        run: |
+          paypal login
+
+      - name: Fund Repository
+        env:
+          REPOSITORY_OWNER: ${{ github.repository_owner }}
+          REPOSITORY_NAME: ${{ github.repository }}
+          AMOUNT: 50  # Replace with the amount you want to fund
+        run: |
+          paypal commerce transactions create '{"amount": {"value": "${AMOUNT}", "currency_code": "USD"}, "note_to_payer": "Thank you for your contribution!", "payee": {"email_address": "${REPOSITORY_OWNER}"}}'
